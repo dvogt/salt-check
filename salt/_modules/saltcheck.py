@@ -182,6 +182,7 @@ def run_highstate_tests():
     passed = 0
     failed = 0
     missing_tests = 0
+    skipped = 0
     for state in results:
         if len(results[state].items()) == 0:
             missing_tests = missing_tests + 1
@@ -192,11 +193,13 @@ def run_highstate_tests():
                     passed = passed + 1
                 if val.startswith('Fail'):
                     failed = failed + 1
+                if val.startswith('Skip'):
+                    skipped = skipped + 1
     out_list = []
     for key, value in results.items():
         out_list.append({key: value})
     out_list.sort()
-    out_list.append({"TEST RESULTS": {'Passed': passed, 'Failed': failed, 'Missing Tests': missing_tests}})
+    out_list.append({"TEST RESULTS": {'Passed': passed, 'Failed': failed, 'Skipped': skipped, 'Missing Tests': missing_tests}})
     return out_list
 
 
@@ -305,13 +308,16 @@ class SaltCheck(object):
              an expected return value - if assertion type requires it'''
         # 6 points needed for standard test
         # 4 points needed for test with assertion not requiring expected return
-        tots = 0  
+        tots = 0
+        skip = test_dict.get('skip', False)
         m_and_f = test_dict.get('module_and_function', None)
         assertion = test_dict.get('assertion', None)
         exp_ret_key = 'expected-return' in test_dict.keys()
         exp_ret_val = test_dict.get('expected-return', None)
         log.info("__is_valid_test has test: {}".format(test_dict))
-        if assertion in ["assertEmpty",
+        if skip:
+            required_total = 0
+        elif assertion in ["assertEmpty",
                          "assertNotEmpty",
                          "assertTrue",
                          "assertFalse"]:
@@ -365,6 +371,9 @@ class SaltCheck(object):
     def run_test(self, test_dict):
         '''Run a single saltcheck test'''
         if self.__is_valid_test(test_dict):
+            skip = test_dict.get('skip', False)
+            if skip:
+                return "Skip"
             mod_and_func = test_dict['module_and_function']
             args = test_dict.get('args', None)
             kwargs = test_dict.get('kwargs', None)

@@ -132,6 +132,7 @@ def run_state_tests(state):
         results[state_name] = results_dict
     passed = 0
     failed = 0
+    skipped = 0
     missing_tests = 0
     for state in results:
         if len(results[state].items()) == 0:
@@ -143,11 +144,13 @@ def run_state_tests(state):
                     passed = passed + 1
                 if val.startswith('Fail'):
                     failed = failed + 1
+                if val.startswith('Skip'):
+                    skipped = skipped + 1
     out_list = []
     for key, value in results.items():
         out_list.append({key: value})
     out_list.sort()
-    out_list.append({"TEST RESULTS": {'Passed': passed, 'Failed': failed, 'Missing Tests': missing_tests}})
+    out_list.append({"TEST RESULTS": {'Passed': passed, 'Failed': failed, 'Skipped': skipped, 'Missing Tests': missing_tests}})
     return out_list
 
 

@@ -130,28 +130,7 @@ def run_state_tests(state):
             result = scheck.run_test(value)
             results_dict[key] = result
         results[state_name] = results_dict
-    passed = 0
-    failed = 0
-    skipped = 0
-    missing_tests = 0
-    for state in results:
-        if len(results[state].items()) == 0:
-            missing_tests = missing_tests + 1
-        else:
-            for dummy, val in results[state].items():
-                log.info("dummy={}, val={}".format(dummy, val))
-                if val.startswith('Pass'):
-                    passed = passed + 1
-                if val.startswith('Fail'):
-                    failed = failed + 1
-                if val.startswith('Skip'):
-                    skipped = skipped + 1
-    out_list = []
-    for key, value in results.items():
-        out_list.append({key: value})
-    out_list.sort()
-    out_list.append({"TEST RESULTS": {'Passed': passed, 'Failed': failed, 'Skipped': skipped, 'Missing Tests': missing_tests}})
-    return out_list
+    return _generate_out_list(results)
 
 
 def run_highstate_tests():
@@ -182,27 +161,34 @@ def run_highstate_tests():
             result = scheck.run_test(value)
             results_dict[key] = result
         results[state_name] = results_dict
+    return _generate_out_list(results)
+
+
+def _generate_out_list(results):
+    ''' generate test results output list '''
     passed = 0
     failed = 0
-    missing_tests = 0
     skipped = 0
+    missing_tests = 0
+    total_time = 0.0
     for state in results:
         if len(results[state].items()) == 0:
             missing_tests = missing_tests + 1
         else:
             for dummy, val in results[state].items():
                 log.info("dummy={}, val={}".format(dummy, val))
-                if val.startswith('Pass'):
+                if val['status'].startswith('Pass'):
                     passed = passed + 1
-                if val.startswith('Fail'):
+                if val['status'].startswith('Fail'):
                     failed = failed + 1
-                if val.startswith('Skip'):
+                if val['status'].startswith('Skip'):
                     skipped = skipped + 1
+                total_time = total_time + float(val['duration'])
     out_list = []
     for key, value in results.items():
         out_list.append({key: value})
     out_list.sort()
-    out_list.append({"TEST RESULTS": {'Passed': passed, 'Failed': failed, 'Skipped': skipped, 'Missing Tests': missing_tests}})
+    out_list.append({"TEST RESULTS": {'Execution Time': round(total_time, 4), 'Passed': passed, 'Failed': failed, 'Skipped': skipped, 'Missing Tests': missing_tests}})
     return out_list
 
 
@@ -373,10 +359,11 @@ class SaltCheck(object):
 
     def run_test(self, test_dict):
         '''Run a single saltcheck test'''
+        start = time.time()
         if self.__is_valid_test(test_dict):
             skip = test_dict.get('skip', False)
             if skip:
-                return "Skip"
+                return {'status': 'Skip', 'duration': 0.0}
             mod_and_func = test_dict['module_and_function']
             args = test_dict.get('args', None)
             kwargs = test_dict.get('kwargs', None)
@@ -413,8 +400,13 @@ class SaltCheck(object):
             else:
                 value = "Fail - bas assertion"
         else:
-            return "Fail - invalid test"
-        return value
+            value = "Fail - invalid test"
+        end = time.time()
+        result = {}
+        result['status'] = value
+        result['duration'] = round(end - start, 4)
+        return result
+
 
     @staticmethod
     def cast_expected_to_returned_type(expected, returned):

@@ -20,6 +20,7 @@ Input files are simple yaml and have the following syntax:
 
 TEST-ID:
   module_and_function:  SALT-MODULE.SALT_FUNCTION
+  assertion_section: SECTION FROM OUTPUT (optional parameter)
   args: ARG-TO-FUNCTION
   kwargs: KWARGS-TO-FUNCTION
   pillar-data: PILLAR-DATA-ON-THE-FLY

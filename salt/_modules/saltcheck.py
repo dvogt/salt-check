@@ -361,7 +361,8 @@ class SaltCheck(object):
     def call_salt_command(self,
                           fun,
                           args,
-                          kwargs):
+                          kwargs,
+                          assertion_section):
         '''Generic call of salt Caller command'''
         value = False
         try:
@@ -377,7 +378,10 @@ class SaltCheck(object):
             raise
         except Exception:
             raise
-        return value
+        if type(value) == dict and assertion_section:
+            return value.get(assertion_section, False)
+        else:
+            return value
 
     def run_test(self, test_dict):
         '''Run a single saltcheck test'''
@@ -387,6 +391,7 @@ class SaltCheck(object):
             if skip:
                 return {'status': 'Skip', 'duration': 0.0}
             mod_and_func = test_dict['module_and_function']
+            assertion_section = test_dict.get('assertion_section', None)
             args = test_dict.get('args', None)
             kwargs = test_dict.get('kwargs', None)
             pillar_data = test_dict.get('pillar-data', None)
@@ -404,7 +409,7 @@ class SaltCheck(object):
             else:
                 assertion = test_dict['assertion']
             expected_return = test_dict.get('expected-return', None)
-            actual_return = self.call_salt_command(mod_and_func, args, kwargs)
+            actual_return = self.call_salt_command(mod_and_func, args, kwargs, assertion_section)
             if assertion not in ["assertIn", "assertNotIn", "assertEmpty", "assertNotEmpty",
                                  "assertTrue", "assertFalse"]:
                 expected_return = self.cast_expected_to_returned_type(expected_return, actual_return)

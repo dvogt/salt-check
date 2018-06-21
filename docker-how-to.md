@@ -5,7 +5,7 @@ This shows how to run docker container to test new functions with saltcheck
 sudo docker build -t wcannon/saltcheck:1.0 .
 ```
 
-# Run docker local docker container
+# Run docker local docker container after cd'ing into cloned repo
 ```
 sudo docker run --name salt-check --add-host=salt:127.0.0.1 --rm -it -v ${PWD}/salt:/srv/salt/ -v ${PWD}/pillar:/srv/pillar -v ${PWD}/minion_config/minion:/etc/salt/minion wcannon/saltcheck:1.0 bash
 ```

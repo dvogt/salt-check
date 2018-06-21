@@ -402,8 +402,10 @@ class SaltCheck(object):
             else:
                 # make sure we clean pillar from previous test
                 if kwargs:
-                    kwargs.pop('pillar')
-
+                    try:
+                        kwargs.pop('pillar')
+                    except:
+                        pass
             if mod_and_func in ["saltcheck.state_apply"]:
                 assertion = "assertEmpty"
             else:
@@ -625,11 +627,16 @@ class SaltCheck(object):
         # state cache should be updated before running this method
         search_list = []
         cachedir = __opts__.get('cachedir', None)
-        environment = __opts__['environment']
+        try:
+            environment = __opts__['environment']
+        except:
+            pass
+        environment = None
         if environment:
             path = cachedir + os.sep + "files" + os.sep + environment
             search_list.append(path)
-        path = cachedir + os.sep + "files" + os.sep + "base"
+        else:
+            path = cachedir + os.sep + "files" + os.sep + "base"
         search_list.append(path)
         return search_list
 

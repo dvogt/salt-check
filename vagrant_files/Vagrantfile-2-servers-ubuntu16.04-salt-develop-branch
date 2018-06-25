@@ -1,0 +1,50 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/xenial64"
+
+  config.vm.define "master" do |master|
+    master.vm.hostname = "master"
+    master.vm.network "private_network", ip: "192.168.1.10"
+    master.vm.synced_folder "~/code/saltstack-clone", "/saltstack_repo"
+    master.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      end
+    master.vm.provision "shell", inline: <<-SHELL
+      echo '192.168.1.10 salt' >> /etc/hosts
+      apt-get update
+      apt-get upgrade -y
+      #wget -O - https://repo.saltstack.com/apt/ubuntu/16.04/amd64/latest/SALTSTACK-GPG-KEY.pub | sudo apt-key add -
+      #echo 'deb http://repo.saltstack.com/apt/ubuntu/16.04/amd64/2018.3 xenial main' > /etc/apt/sources.list.d/saltstack.list
+      apt-get update
+      #apt-get install -y salt-master salt-minion
+      #ln -s /saltcheck_repo/pillar/ /srv/pillar
+      #ln -s /saltcheck_repo/salt/ /srv/salt
+      #sleep 15
+      #salt-key -y -a ubuntu-xenial 
+      SHELL
+  end
+
+  config.vm.define "minion" do |minion|
+    minion.vm.hostname = "minion"
+    minion.vm.network "private_network", ip: "192.168.1.11"
+    minion.vm.synced_folder "~/code/saltstack-clone", "/saltstack_repo"
+    minion.vm.provider "virtualbox" do |vb|
+      vb.memory = "1024"
+      end
+    minion.vm.provision "shell", inline: <<-SHELL
+      echo '192.168.1.10 salt' >> /etc/hosts
+      apt-get update
+      apt-get upgrade -y
+      #wget -O - https://repo.saltstack.com/apt/ubuntu/16.04/amd64/latest/SALTSTACK-GPG-KEY.pub | sudo apt-key add -
+      #echo 'deb http://repo.saltstack.com/apt/ubuntu/16.04/amd64/2018.3 xenial main' > /etc/apt/sources.list.d/saltstack.list
+      apt-get update
+      #apt-get install -y salt-minion
+      SHELL
+  end
+end
